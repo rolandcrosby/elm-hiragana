@@ -2,11 +2,10 @@ module Main exposing (..)
 
 import Html exposing (Html, Attribute, div, input, label, text, button, select, option)
 import Html.Attributes exposing (class, value, selected, for, id, type_, checked)
-import Html.Events exposing (onInput, onClick, onBlur, onClick)
+import Html.Events exposing (onInput, onClick, onBlur, onClick, onFocus)
 import Html.Keyed
 import Random
-import Random.Array
-import Array exposing (Array)
+import Array.Hamt as A
 
 
 main =
@@ -43,71 +42,71 @@ romaji k =
             r
 
 
-hiragana : Array (Array Kana)
+hiragana : A.Array (A.Array Kana)
 hiragana =
-    Array.fromList
-        [ Array.fromList
+    A.fromList
+        [ A.fromList
             [ Hiragana "あ" "A"
             , Hiragana "い" "I"
             , Hiragana "う" "U"
             , Hiragana "え" "E"
             , Hiragana "お" "O"
             ]
-        , Array.fromList
+        , A.fromList
             [ Hiragana "か" "KA"
             , Hiragana "き" "KI"
             , Hiragana "く" "KU"
             , Hiragana "け" "KE"
             , Hiragana "こ" "KO"
             ]
-        , Array.fromList
+        , A.fromList
             [ Hiragana "さ" "SA"
             , Hiragana "し" "SHI"
             , Hiragana "す" "SU"
             , Hiragana "せ" "SE"
             , Hiragana "そ" "SO"
             ]
-        , Array.fromList
+        , A.fromList
             [ Hiragana "た" "TA"
             , Hiragana "ち" "CHI"
             , Hiragana "つ" "TSU"
             , Hiragana "て" "TE"
             , Hiragana "と" "TO"
             ]
-        , Array.fromList
+        , A.fromList
             [ Hiragana "な" "NA"
             , Hiragana "に" "NI"
             , Hiragana "ぬ" "NU"
             , Hiragana "ね" "NE"
             , Hiragana "の" "NO"
             ]
-        , Array.fromList
+        , A.fromList
             [ Hiragana "は" "HA"
             , Hiragana "ひ" "HI"
             , Hiragana "ふ" "HU"
             , Hiragana "へ" "HE"
             , Hiragana "ほ" "HO"
             ]
-        , Array.fromList
+        , A.fromList
             [ Hiragana "ま" "MA"
             , Hiragana "み" "MI"
             , Hiragana "む" "MU"
             , Hiragana "め" "ME"
             , Hiragana "も" "MO"
             ]
-        , Array.fromList
+        , A.fromList
             [ Hiragana "や" "YA"
             , Hiragana "ゆ" "YU"
             , Hiragana "よ" "YO"
             ]
-        , Array.fromList
+        , A.fromList
             [ Hiragana "ら" "RA"
             , Hiragana "り" "RI"
             , Hiragana "る" "RU"
             , Hiragana "れ" "RE"
             , Hiragana "ろ" "RO"
             ]
-        , Array.fromList
+        , A.fromList
             [ Hiragana "わ" "WA"
             , Hiragana "を" "WO"
             , Hiragana "ん" "N"
@@ -119,16 +118,17 @@ type alias Entry =
     { char : Kana, guess : String }
 
 
-levelKana : Array String
+levelKana : A.Array String
 levelKana =
-    Array.map (\l -> Array.map (\k -> kana k) l |> Array.toList |> String.join ", ") hiragana
+    A.map (\l -> A.map (\k -> kana k) l |> A.toList |> String.join ", ") hiragana
 
 
 type alias Model =
-    { entries : Array Entry
+    { entries : List Entry
     , entryCount : Int
     , level : Int
     , cumulative : Bool
+    , selectedIdx : Maybe Int
     }
 
 
@@ -136,55 +136,61 @@ init : ( Model, Cmd Msg )
 init =
     let
         model =
-            Model Array.empty 100 0 True
+            Model [] 100 0 True Nothing
     in
         ( model, replaceCmd model )
 
 
-hiraganaForLevel : Int -> Bool -> Array Kana
+hiraganaForLevel : Int -> Bool -> A.Array Kana
 hiraganaForLevel n cumulative =
     if cumulative then
-        (Array.indexedMap
+        (A.indexedMap
             (\i e ->
                 if (i <= n) then
                     e
                 else
-                    Array.empty
+                    A.empty
             )
             hiragana
         )
-            |> Array.foldr (Array.append) Array.empty
+            |> A.foldr (A.append) A.empty
     else
-        Array.get n hiragana |> Maybe.withDefault Array.empty
+        A.get n hiragana |> Maybe.withDefault A.empty
 
 
-entryGenerator : Int -> Array Kana -> Random.Generator (Array Entry)
+entryGenerator : Int -> A.Array Kana -> Random.Generator (List Entry)
 entryGenerator n possibilities =
     let
         l =
-            Array.length possibilities
+            A.length possibilities
 
         g =
             Random.int 0 (l - 1)
-                |> Random.map (\x -> Entry (Array.get x possibilities |> Maybe.withDefault (Hiragana "" "")) "")
-
-        --
+                |> Random.map (\x -> Entry (A.get x possibilities |> Maybe.withDefault (Hiragana "" "")) "")
     in
-        Random.Array.array n g
+        Random.list n g
 
 
 type Msg
     = Refresh
-    | ReplaceEntries (Array Entry)
+    | ReplaceEntries (List Entry)
     | UpdateEntry Int String
     | SetLevel String
     | ToggleCumulative
+    | Unselect Int
+    | Select Int
 
 
 replaceCmd : Model -> Cmd Msg
 replaceCmd m =
     Random.generate ReplaceEntries (entryGenerator m.entryCount (hiraganaForLevel m.level m.cumulative))
 
+get : Int -> List a -> Maybe a
+get n xs = List.head (List.drop n xs) 
+
+updatedAt : Int -> a -> List a -> List a
+updatedAt idx item list =
+    List.indexedMap (\i el -> if i == idx then item else el) list
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -198,20 +204,20 @@ update msg model =
         UpdateEntry idx val ->
             let
                 oldEntry =
-                    Array.get idx model.entries |> Maybe.withDefault (Entry (Hiragana "" "") "")
+                    get idx model.entries |> Maybe.withDefault (Entry (Hiragana "" "") "")
 
                 newEntry =
                     { oldEntry | guess = val }
 
                 newEntries =
-                    Array.set idx newEntry model.entries
+                    updatedAt idx newEntry model.entries
             in
                 ( { model | entries = newEntries }, Cmd.none )
 
         SetLevel l ->
             case String.toInt l of
                 Ok n ->
-                    if (n > 0) && (n < (Array.length hiragana)) then
+                    if (n >= 0) && (n < (A.length hiragana)) then
                         let
                             m =
                                 { model | level = n }
@@ -230,20 +236,39 @@ update msg model =
             in
                 ( m, replaceCmd m )
 
+        Unselect n ->
+            if model.selectedIdx == Just n then
+                ( { model | selectedIdx = Nothing }, Cmd.none )
+            else
+                ( model, Cmd.none )
+
+        Select n ->
+            ( { model | selectedIdx = Just n }, Cmd.none )
+
 
 view : Model -> Html Msg
 view model =
     div []
         [ controls model.level model.cumulative
-        , renderEntries model.entries
+        , hiraganaList model.level model.cumulative
+        , renderEntries model.entries model.selectedIdx
         ]
 
+hiraganaList : Int -> Bool -> Html Msg
+hiraganaList level cumulative =
+    let
+        chars = hiraganaForLevel level cumulative
+            |> A.map kana
+            |> A.toList
+            |> String.join " "
+    in
+        div [] [text ("Hiragana: " ++ chars)]
 
 controls : Int -> Bool -> Html Msg
 controls n cumulative =
     let
         levelCount =
-            Array.length hiragana
+            A.length hiragana
 
         levels =
             List.range 0 (levelCount - 1)
@@ -253,7 +278,7 @@ controls n cumulative =
                 (List.map
                     (\l ->
                         option [ value (toString l), selected (l == n) ]
-                            [ text ("Level " ++ (toString (l + 1)) ++ " (" ++ (Array.get l levelKana |> Maybe.withDefault "") ++ ")") ]
+                            [ text ("Level " ++ (toString (l + 1)) ++ " (" ++ (A.get l levelKana |> Maybe.withDefault "") ++ ")") ]
                     )
                     levels
                 )
@@ -265,19 +290,36 @@ controls n cumulative =
             ]
 
 
-renderEntries : Array Entry -> Html Msg
-renderEntries l =
-    Html.Keyed.node "div" [ class "entries" ] (Array.indexedMap renderEntry l |> Array.toList)
+renderEntries : List Entry -> Maybe Int -> Html Msg
+renderEntries entries selected =
+    Html.Keyed.node "div"
+        [ class "entries" ]
+        (List.indexedMap
+            (\i e ->
+                renderEntry e
+                    i
+                    (case selected of
+                        Just n ->
+                            n == i
+
+                        Nothing ->
+                            False
+                    )
+            )
+            entries
+        )
 
 
-renderEntry : Int -> Entry -> ( String, Html Msg )
-renderEntry i e =
+renderEntry : Entry -> Int -> Bool -> ( String, Html Msg )
+renderEntry entry idx selected =
     let
         correct =
-            String.trim (String.toLower e.guess) == String.trim (String.toLower (romaji e.char))
+            String.trim
+                (String.toLower entry.guess)
+                == String.trim (String.toLower (romaji entry.char))
 
         className =
-            if e.guess == "" then
+            if entry.guess == "" || selected then
                 ""
             else if correct then
                 "correct"
@@ -285,18 +327,20 @@ renderEntry i e =
                 "incorrect"
 
         inputId =
-            "input" ++ (toString i)
+            "input" ++ (toString idx)
     in
-        ( (toString i)
+        ( (toString idx)
         , div
             [ class ("entry " ++ className)
             ]
-            [ input [ onInput (UpdateEntry i), value e.guess, id inputId ] []
-            , label [ for inputId ] [ textFor e.char ]
+            [ input
+                [ onInput (UpdateEntry idx)
+                , onFocus (Select idx)
+                , onBlur (Unselect idx)
+                , value entry.guess
+                , id inputId
+                ]
+                []
+            , label [ for inputId ] [ text (kana entry.char) ]
             ]
         )
-
-
-textFor : Kana -> Html Msg
-textFor c =
-    text (kana c)
