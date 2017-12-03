@@ -179,6 +179,7 @@ type Msg
     | ToggleCumulative
     | Unselect Int
     | Select Int
+    | Reveal
 
 
 replaceCmd : Model -> Cmd Msg
@@ -244,6 +245,8 @@ update msg model =
 
         Select n ->
             ( { model | selectedIdx = Just n }, Cmd.none )
+        Reveal ->
+            ( {model | entries = List.map (\e -> Entry e.char (String.toLower (romaji e.char))) model.entries}, Cmd.none )
 
 
 view : Model -> Html Msg
@@ -286,6 +289,7 @@ controls n cumulative =
                 [ input [ type_ "checkbox", onClick ToggleCumulative, checked cumulative ] []
                 , text "Cumulative"
                 ]
+            , button [ onClick Reveal ] [ text "Reveal" ]
             , button [ onClick Refresh ] [ text "Refresh" ]
             ]
 
@@ -319,10 +323,12 @@ renderEntry entry idx selected =
                 == String.trim (String.toLower (romaji entry.char))
 
         className =
-            if entry.guess == "" || selected then
-                ""
-            else if correct then
+            if correct then
                 "correct"
+            else if selected then
+                "selected"
+            else if entry.guess == "" then
+                ""
             else
                 "incorrect"
 

@@ -4,5 +4,6 @@ body {font-family: sans-serif}
 .entry input {border: 1px solid #666; border-width: 0 0 1px; margin: 0; padding: 0; text-align: center; outline: none}
 .incorrect label {background: #f99}
 .correct label {background: #9f9}
+.selected label {background: #eee}
 .controls > * {margin-right: 1em;}
 .controls {margin-bottom: 1em;}
