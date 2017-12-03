@@ -1,0 +1,8 @@
+body {font-family: sans-serif}
+.entries {display: flex; flex-wrap: wrap; align-content: flex-start}
+.entry {width: 3em; margin: 1px; text-align: center; display: flex; flex-direction: column;}
+.entry input {border: 1px solid #666; border-width: 0 0 1px; margin: 0; padding: 0; text-align: center; outline: none}
+.incorrect label {background: #f99}
+.correct label {background: #9f9}
+.controls > * {margin-right: 1em;}
+.controls {margin-bottom: 1em;}

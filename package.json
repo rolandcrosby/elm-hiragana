@@ -1,0 +1,21 @@
+{
+  "name": "elm-hiragana",
+  "version": "1.0.0",
+  "description": "Trying to learn Hiragana with Elm",
+  "main": "server.js",
+  "scripts": {
+    "elm-install-deps": "elm package install --yes",
+    "start": "bash sh/start"
+  },
+  "dependencies": {
+    "express": "^4.15.4",
+    "elm": "^0.18.0"
+  },
+  "engines": {
+    "node": "6.11.x"
+  },
+  "repository": {
+    "url": "https://glitch.com/edit/#!/welcome-project"
+  },
+  "license": "ISC"
+}
