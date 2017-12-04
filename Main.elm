@@ -180,18 +180,30 @@ type Msg
     | Unselect Int
     | Select Int
     | Reveal
+    | SetCount String
 
 
 replaceCmd : Model -> Cmd Msg
 replaceCmd m =
     Random.generate ReplaceEntries (entryGenerator m.entryCount (hiraganaForLevel m.level m.cumulative))
 
+
 get : Int -> List a -> Maybe a
-get n xs = List.head (List.drop n xs) 
+get n xs =
+    List.head (List.drop n xs)
+
 
 updatedAt : Int -> a -> List a -> List a
 updatedAt idx item list =
-    List.indexedMap (\i el -> if i == idx then item else el) list
+    List.indexedMap
+        (\i el ->
+            if i == idx then
+                item
+            else
+                el
+        )
+        list
+
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -245,30 +257,54 @@ update msg model =
 
         Select n ->
             ( { model | selectedIdx = Just n }, Cmd.none )
+
         Reveal ->
-            ( {model | entries = List.map (\e -> Entry e.char (String.toLower (romaji e.char))) model.entries}, Cmd.none )
+            ( { model
+                | entries =
+                    List.map
+                        (\e -> Entry e.char (String.toLower (romaji e.char)))
+                        model.entries
+              }
+            , Cmd.none
+            )
+
+        SetCount c ->
+            let
+                newCount =
+                    String.toInt c |> Result.withDefault model.entryCount
+
+                newModel =
+                    { model | entryCount = newCount }
+            in
+                if model.entryCount /= newCount then
+                    ( newModel, replaceCmd newModel )
+                else
+                    ( model, Cmd.none )
 
 
 view : Model -> Html Msg
 view model =
     div []
-        [ controls model.level model.cumulative
+        [ controls model.level model.cumulative model.entryCount
         , hiraganaList model.level model.cumulative
         , renderEntries model.entries model.selectedIdx
         ]
 
+
 hiraganaList : Int -> Bool -> Html Msg
 hiraganaList level cumulative =
     let
-        chars = hiraganaForLevel level cumulative
-            |> A.map kana
-            |> A.toList
-            |> String.join " "
+        chars =
+            hiraganaForLevel level cumulative
+                |> A.map kana
+                |> A.toList
+                |> String.join " "
     in
-        div [] [text ("Hiragana: " ++ chars)]
+        div [] [ text ("Hiragana: " ++ chars) ]
 
-controls : Int -> Bool -> Html Msg
-controls n cumulative =
+
+controls : Int -> Bool -> Int -> Html Msg
+controls level cumulative entryCount =
     let
         levelCount =
             A.length hiragana
@@ -280,7 +316,7 @@ controls n cumulative =
             [ select [ onInput SetLevel ]
                 (List.map
                     (\l ->
-                        option [ value (toString l), selected (l == n) ]
+                        option [ value (toString l), selected (l == level) ]
                             [ text ("Level " ++ (toString (l + 1)) ++ " (" ++ (A.get l levelKana |> Maybe.withDefault "") ++ ")") ]
                     )
                     levels
@@ -288,6 +324,18 @@ controls n cumulative =
             , label []
                 [ input [ type_ "checkbox", onClick ToggleCumulative, checked cumulative ] []
                 , text "Cumulative"
+                ]
+            , label []
+                [ input
+                    [ type_ "range"
+                    , onInput SetCount
+                    , Html.Attributes.min <| toString 20
+                    , Html.Attributes.max <| toString 200
+                    , Html.Attributes.step <| toString 10
+                    , value <| toString entryCount
+                    ]
+                    []
+                , text <| toString entryCount
                 ]
             , button [ onClick Reveal ] [ text "Reveal" ]
             , button [ onClick Refresh ] [ text "Refresh" ]
