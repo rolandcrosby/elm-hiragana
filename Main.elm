@@ -111,6 +111,41 @@ hiragana =
             , Hiragana "を" "WO"
             , Hiragana "ん" "N"
             ]
+        , A.fromList
+            [ Hiragana "が" "GA"
+            , Hiragana "ぎ" "GI"
+            , Hiragana "ぐ" "GU"
+            , Hiragana "げ" "GE"
+            , Hiragana "ご" "GO"
+            ]
+        , A.fromList
+            [ Hiragana "ざ" "ZA"
+            , Hiragana "じ" "JI"
+            , Hiragana "ず" "ZU"
+            , Hiragana "ぜ" "ZE"
+            , Hiragana "ぞ" "ZO"
+            ]
+        , A.fromList
+            [ Hiragana "だ" "DA"
+            , Hiragana "ぢ" "DZI"
+            , Hiragana "づ" "DZU"
+            , Hiragana "で" "DE"
+            , Hiragana "ど" "DO"
+            ]
+        , A.fromList
+            [ Hiragana "ば" "BA"
+            , Hiragana "び" "BI"
+            , Hiragana "ぶ" "BU"
+            , Hiragana "べ" "BE"
+            , Hiragana "ぼ" "BO"
+            ]
+        , A.fromList
+            [ Hiragana "ぱ" "PA"
+            , Hiragana "ぱ" "PI"
+            , Hiragana "ぷ" "PU"
+            , Hiragana "ぺ" "PE"
+            , Hiragana "ぽ" "PO"
+            ]
         ]
 
 
