@@ -141,7 +141,7 @@ hiragana =
             ]
         , A.fromList
             [ Hiragana "ぱ" "PA"
-            , Hiragana "ぱ" "PI"
+            , Hiragana "ぴ" "PI"
             , Hiragana "ぷ" "PU"
             , Hiragana "ぺ" "PE"
             , Hiragana "ぽ" "PO"
