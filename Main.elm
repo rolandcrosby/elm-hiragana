@@ -6,6 +6,12 @@ import Html.Events exposing (onInput, onClick, onBlur, onClick, onFocus)
 import Html.Keyed
 import Random
 import Array.Hamt as A
+import Characters exposing (..)
+
+
+hiragana : A.Array (A.Array Kana)
+hiragana =
+    A.append plainHiragana (A.append dakutenHiragana combinationHiragana)
 
 
 main =
@@ -15,138 +21,6 @@ main =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.none
-
-
-type Kana
-    = Hiragana String String
-    | Katakana String String
-
-
-kana : Kana -> String
-kana k =
-    case k of
-        Katakana k r ->
-            k
-
-        Hiragana k r ->
-            k
-
-
-romaji : Kana -> String
-romaji k =
-    case k of
-        Katakana k r ->
-            r
-
-        Hiragana k r ->
-            r
-
-
-hiragana : A.Array (A.Array Kana)
-hiragana =
-    A.fromList
-        [ A.fromList
-            [ Hiragana "あ" "A"
-            , Hiragana "い" "I"
-            , Hiragana "う" "U"
-            , Hiragana "え" "E"
-            , Hiragana "お" "O"
-            ]
-        , A.fromList
-            [ Hiragana "か" "KA"
-            , Hiragana "き" "KI"
-            , Hiragana "く" "KU"
-            , Hiragana "け" "KE"
-            , Hiragana "こ" "KO"
-            ]
-        , A.fromList
-            [ Hiragana "さ" "SA"
-            , Hiragana "し" "SHI"
-            , Hiragana "す" "SU"
-            , Hiragana "せ" "SE"
-            , Hiragana "そ" "SO"
-            ]
-        , A.fromList
-            [ Hiragana "た" "TA"
-            , Hiragana "ち" "CHI"
-            , Hiragana "つ" "TSU"
-            , Hiragana "て" "TE"
-            , Hiragana "と" "TO"
-            ]
-        , A.fromList
-            [ Hiragana "な" "NA"
-            , Hiragana "に" "NI"
-            , Hiragana "ぬ" "NU"
-            , Hiragana "ね" "NE"
-            , Hiragana "の" "NO"
-            ]
-        , A.fromList
-            [ Hiragana "は" "HA"
-            , Hiragana "ひ" "HI"
-            , Hiragana "ふ" "HU"
-            , Hiragana "へ" "HE"
-            , Hiragana "ほ" "HO"
-            ]
-        , A.fromList
-            [ Hiragana "ま" "MA"
-            , Hiragana "み" "MI"
-            , Hiragana "む" "MU"
-            , Hiragana "め" "ME"
-            , Hiragana "も" "MO"
-            ]
-        , A.fromList
-            [ Hiragana "や" "YA"
-            , Hiragana "ゆ" "YU"
-            , Hiragana "よ" "YO"
-            ]
-        , A.fromList
-            [ Hiragana "ら" "RA"
-            , Hiragana "り" "RI"
-            , Hiragana "る" "RU"
-            , Hiragana "れ" "RE"
-            , Hiragana "ろ" "RO"
-            ]
-        , A.fromList
-            [ Hiragana "わ" "WA"
-            , Hiragana "を" "WO"
-            , Hiragana "ん" "N"
-            ]
-        , A.fromList
-            [ Hiragana "が" "GA"
-            , Hiragana "ぎ" "GI"
-            , Hiragana "ぐ" "GU"
-            , Hiragana "げ" "GE"
-            , Hiragana "ご" "GO"
-            ]
-        , A.fromList
-            [ Hiragana "ざ" "ZA"
-            , Hiragana "じ" "JI"
-            , Hiragana "ず" "ZU"
-            , Hiragana "ぜ" "ZE"
-            , Hiragana "ぞ" "ZO"
-            ]
-        , A.fromList
-            [ Hiragana "だ" "DA"
-            , Hiragana "ぢ" "DZI"
-            , Hiragana "づ" "DZU"
-            , Hiragana "で" "DE"
-            , Hiragana "ど" "DO"
-            ]
-        , A.fromList
-            [ Hiragana "ば" "BA"
-            , Hiragana "び" "BI"
-            , Hiragana "ぶ" "BU"
-            , Hiragana "べ" "BE"
-            , Hiragana "ぼ" "BO"
-            ]
-        , A.fromList
-            [ Hiragana "ぱ" "PA"
-            , Hiragana "ぴ" "PI"
-            , Hiragana "ぷ" "PU"
-            , Hiragana "ぺ" "PE"
-            , Hiragana "ぽ" "PO"
-            ]
-        ]
 
 
 type alias Entry =
@@ -321,7 +195,7 @@ view : Model -> Html Msg
 view model =
     div []
         [ controls model.level model.cumulative model.entryCount
-        , hiraganaList model.level model.cumulative
+          --      , hiraganaList model.level model.cumulative
         , renderEntries model.entries model.selectedIdx
         ]
 
@@ -352,7 +226,7 @@ controls level cumulative entryCount =
                 (List.map
                     (\l ->
                         option [ value (toString l), selected (l == level) ]
-                            [ text ("Level " ++ (toString (l + 1)) ++ " (" ++ (A.get l levelKana |> Maybe.withDefault "") ++ ")") ]
+                            [ text (A.get l levelKana |> Maybe.withDefault "") ]
                     )
                     levels
                 )
